@@ -7,8 +7,9 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+class FirstVC: UIViewController {
     
+    var zodiacs: [Zodiac] = []
     var backgroundImageView: UIImageView!
     
     let mainText: UILabel = {
@@ -20,14 +21,16 @@ class ViewController: UIViewController {
         return label
     }()
     
-    let descriptionText: UILabel = {
-        let label = UILabel()
-        label.text = "მოცემულ აპლიკაციაში შეგიძლიათ გაიგოთ თქვენი ზოდიაქოს ყველაზე გამოკვეთილი უნარები და თვისებები."
-        label.numberOfLines = 0
-        label.textColor = .gray
-        label.font = UIFont.systemFont(ofSize: 16, weight: .light)
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
+    let descriptionText: UITextView = {
+        let textView = UITextView()
+        textView.text = "მოცემულ აპლიკაციაში შეგიძლიათ გაიგოთ თქვენი ზოდიაქოს ყველაზე გამოკვეთილი უნარები და თვისებები."
+        textView.textColor = .gray
+        textView.font = UIFont.systemFont(ofSize: 16, weight: .light)
+        textView.isScrollEnabled = false
+        textView.isEditable = false
+        textView.translatesAutoresizingMaskIntoConstraints = false
+        textView.backgroundColor = UIColor.clear
+        return textView
     }()
     
     let zodiacName: UILabel = {
@@ -41,7 +44,7 @@ class ViewController: UIViewController {
     
     let zodiacTextField: UITextField = {
         let textField = UITextField()
-        textField.attributedPlaceholder = NSAttributedString(string: "მაგ: მაშვილდოსანი", attributes: [NSAttributedString.Key.foregroundColor: UIColor.white])
+        textField.attributedPlaceholder = NSAttributedString(string: "მაგ: მაშვილდოსანი", attributes: [NSAttributedString.Key.foregroundColor: UIColor.gray])
         textField.textColor = .white
         textField.font = UIFont.systemFont(ofSize: 12)
         textField.borderStyle = .roundedRect
@@ -51,7 +54,7 @@ class ViewController: UIViewController {
         textField.layer.borderColor = UIColor.white.cgColor
         textField.translatesAutoresizingMaskIntoConstraints = false
         return textField
-
+        
     }()
     
     let nextButton: UIButton = {
@@ -66,15 +69,28 @@ class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-            
+        
         setupBackgroundImageView()
         setupMainText()
+        zodiacs = Zodiac.setupZodiacData()
+        
+        nextButton.addAction(UIAction(handler: { [weak self] _ in
+            if let zodiacName = self?.zodiacTextField.text {
+                if let selectedZodiac = self?.zodiacs.first(where: { $0.name == zodiacName }) {
+                    self?.navigateToDescriptionVC(zodiac: selectedZodiac)
+                } else {
+                    let alert = UIAlertController(title: "ოღონდაცარააა", message: "შეიყვანე სწორი ზოდიაქო.", preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                    self?.present(alert, animated: true, completion: nil)
+                }
+            }
+        }), for: .touchUpInside)
     }
     
-
+    
     func setupBackgroundImageView() {
         view.backgroundColor = UIColor(red: 30/255, green: 31/255, blue: 36/255, alpha: 1.0)
-
+        
         backgroundImageView = UIImageView(image: UIImage(named: "background img"))
         backgroundImageView.contentMode = .scaleAspectFill
         backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
@@ -88,14 +104,28 @@ class ViewController: UIViewController {
             backgroundImageView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
         view.sendSubviewToBack(backgroundImageView)
-
+        
+    }
+    
+    func navigateToDescriptionVC(zodiac: Zodiac) {
+        let descriptionVC = DescriptionVC()
+        descriptionVC.selectedZodiac = zodiac
+        navigationController?.pushViewController(descriptionVC, animated: true)
     }
     
     func setupMainText() {
         view.addSubview(mainText)
         view.addSubview(descriptionText)
-        view.addSubview(zodiacName)
-        view.addSubview(zodiacTextField)
+        
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.spacing = 4
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(stackView)
+        
+        stackView.addArrangedSubview(zodiacName)
+        stackView.addArrangedSubview(zodiacTextField)
+        
         view.addSubview(nextButton)
         
         NSLayoutConstraint.activate([
@@ -106,25 +136,16 @@ class ViewController: UIViewController {
             descriptionText.topAnchor.constraint(equalTo: mainText.bottomAnchor, constant: 20),
             descriptionText.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
             descriptionText.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-
-            zodiacName.topAnchor.constraint(equalTo: descriptionText.bottomAnchor, constant: 91),
-            zodiacName.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 22),
-            zodiacName.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -18),
-           
-            zodiacTextField.topAnchor.constraint(equalTo: zodiacName.bottomAnchor, constant: 4),
-            zodiacTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 22),
-            zodiacTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -18),
-            zodiacTextField.heightAnchor.constraint(equalToConstant: 44),
             
-            nextButton.topAnchor.constraint(equalTo: zodiacTextField.bottomAnchor, constant: 25),
+            stackView.topAnchor.constraint(equalTo: descriptionText.bottomAnchor, constant: 91),
+            stackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 22),
+            stackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -18),
+            
+            nextButton.topAnchor.constraint(equalTo: stackView.bottomAnchor, constant: 25),
             nextButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             nextButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             nextButton.heightAnchor.constraint(equalToConstant: 46),
-
-            
         ])
     }
     
-    
 }
-
